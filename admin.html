@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
+  <title>Panel Operator — SakuKu</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="{{ url_for('static', filename='js/tailwind-config.js') }}"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@0.344.0"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen transition-colors duration-200">
+  <div class="max-w-5xl mx-auto p-4 md:p-8 space-y-6">
+    <!-- Topbar -->
+    <header class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-brand-600 dark:bg-brand-500 flex items-center justify-center text-white">
+          <i data-lucide="shield-check" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-lg leading-none">Panel Operator SakuKu</h1>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live
+            </span>
+          </div>
+          <span class="text-xs text-slate-500 dark:text-slate-400">Masuk sebagai {{ user_name }}</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="/" class="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 transition">
+          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Dashboard Saya
+        </a>
+        <button id="btn-theme" class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" title="Ganti Tema">
+          <i data-lucide="moon" class="w-4 h-4"></i>
+        </button>
+        <button onclick="logoutUser()" class="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 flex items-center gap-1.5 transition">
+          <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Keluar
+        </button>
+      </div>
+    </header>
+
+    <!-- Stats Cards -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="rounded-2xl p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+        <span class="text-xs text-slate-500 dark:text-slate-400">Total Pengguna</span>
+        <div id="stat-users" class="text-2xl font-bold mt-1">0</div>
+      </div>
+      <div class="rounded-2xl p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+        <span class="text-xs text-slate-500 dark:text-slate-400">Akun Aktif</span>
+        <div id="stat-active" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">0</div>
+      </div>
+      <div class="rounded-2xl p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+        <span class="text-xs text-slate-500 dark:text-slate-400">Total Transaksi</span>
+        <div id="stat-tx" class="text-2xl font-bold mt-1">0</div>
+      </div>
+      <div class="rounded-2xl p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+        <span class="text-xs text-slate-500 dark:text-slate-400">Target Tabungan</span>
+        <div id="stat-goals" class="text-2xl font-bold mt-1">0</div>
+      </div>
+    </section>
+
+    <!-- Status Keamanan -->
+    <section aria-label="Status keamanan" class="grid grid-cols-3 gap-4">
+      <div class="rounded-2xl p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+        <span class="text-xs text-slate-500 dark:text-slate-400">Login gagal (24 jam)</span>
+        <div id="sec-failed" class="text-2xl font-bold mt-1 ">0</div>
+      </div>
+      <div class="rounded-2xl p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+        <span class="text-xs text-slate-500 dark:text-slate-400">Sedang dikunci</span>
+        <div id="sec-locked" class="text-2xl font-bold mt-1 text-rose-600 dark:text-rose-400">0</div>
+      </div>
+      <div class="rounded-2xl p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+        <span class="text-xs text-slate-500 dark:text-slate-400">Wajib ganti password</span>
+        <div id="sec-pending" class="text-2xl font-bold mt-1 text-amber-600 dark:text-amber-400">0</div>
+      </div>
+    </section>
+
+    <!-- Pengumuman Global -->
+    <section class="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+      <div>
+        <h2 class="font-bold text-sm">Pengumuman Global</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Tampil real-time di Dashboard semua pengguna. Kosongkan untuk menyembunyikan.</p>
+      </div>
+      <form id="form-announcement" class="flex flex-col sm:flex-row gap-2.5">
+        <input type="text" id="input-announcement" placeholder="Contoh: Jangan lupa catat pengeluaran hari ini!" class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold transition">Simpan</button>
+      </form>
+    </section>
+
+    <!-- Daftar Pengguna -->
+    <section class="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
+      <div>
+        <h2 class="font-bold text-sm">Manajemen Pengguna</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Privasi terjaga: operator hanya mengelola akun, tidak dapat melihat saldo atau rincian transaksi pengguna.</p>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+              <th class="py-2.5 pr-4 font-semibold">Nama</th>
+              <th class="py-2.5 px-3 font-semibold">Username</th>
+              <th class="py-2.5 px-3 font-semibold">Role</th>
+              <th class="py-2.5 px-3 font-semibold">Aktivitas</th>
+              <th class="py-2.5 px-3 font-semibold">Status</th>
+              <th class="py-2.5 pl-3 font-semibold text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Log Aktivitas Terbaru -->
+    <section class="rounded-2xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <h2 class="font-bold text-sm">Log Aktivitas Terbaru</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Otomatis diperbarui setiap 3 detik (tanpa nominal uang atau catatan pribadi).</p>
+        </div>
+        <button onclick="loadAdminData(true)" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 transition">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Muat Ulang
+        </button>
+      </div>
+
+      <ul id="activity-logs-list" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-80 overflow-y-auto pr-1"></ul>
+    </section>
+  </div>
+
+  <!-- MODAL: Verifikasi password operator -->
+  <div id="modal-confirm" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <form id="form-confirm" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+      <div>
+        <h3 id="confirm-title" class="font-bold text-lg"></h3>
+        <p id="confirm-desc" class="text-xs text-slate-500 dark:text-slate-400 mt-1"></p>
+      </div>
+      <div>
+        <label for="confirm-password" class="block text-xs font-semibold text-slate-500 mb-1">Password operator Anda</label>
+        <input type="password" id="confirm-password" required maxlength="128" autocomplete="current-password" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <div class="flex gap-2">
+        <button type="button" id="confirm-cancel" class="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800">Batal</button>
+        <button type="submit" id="confirm-submit" class="flex-1 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold">Konfirmasi</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- MODAL: Password sementara (tampil sekali) -->
+  <div id="modal-temp" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="temp-title">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+      <div>
+        <h3 id="temp-title" class="font-bold text-lg">Password sementara</h3>
+        <p id="temp-desc" class="text-xs text-slate-500 dark:text-slate-400 mt-1"></p>
+      </div>
+      <div class="flex items-center gap-2">
+        <code id="temp-value" class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-base font-bold tracking-wider text-center select-all"></code>
+        <button id="temp-copy" class="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800">Salin</button>
+      </div>
+      <p class="text-[11px] text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 rounded-lg px-3 py-2">Password ini hanya ditampilkan sekali. Pengguna wajib menggantinya saat login berikutnya, dan semua sesi lamanya sudah dikeluarkan.</p>
+      <button id="temp-close" class="w-full py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold">Selesai</button>
+    </div>
+  </div>
+
+  <div id="toast-container" class="fixed bottom-6 right-4 z-50 space-y-2"></div>
+
+  <script>
+    if (localStorage.getItem("sakuku_theme") === "dark") {
+      document.documentElement.classList.add("dark");
+    }
+    lucide.createIcons();
+
+    document.getElementById("btn-theme").addEventListener("click", () => {
+      const isDark = document.documentElement.classList.toggle("dark");
+      localStorage.setItem("sakuku_theme", isDark ? "dark" : "light");
+    });
+
+    const escapeHtml = (text) =>
+      String(text ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    const showToast = (msg, type = "success") => {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      const bg = type === "error" ? "bg-rose-600" : "bg-slate-900 dark:bg-brand-500";
+      toast.className = `toast-enter ${bg} text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg`;
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 2800);
+    };
+
+    let lastAdminHash = "";
+
+    const loadAdminData = async (notify = false) => {
+      const res = await fetch("/api/admin/overview");
+      if (res.status === 401) { window.location.href = "/auth"; return; }
+      if (res.status === 403) { window.location.href = "/"; return; }
+      const data = await res.json();
+
+      const currentHash = JSON.stringify(data);
+      if (!notify && currentHash === lastAdminHash) return;
+      lastAdminHash = currentHash;
+
+      document.getElementById("stat-users").textContent = data.stats.total_users;
+      document.getElementById("stat-active").textContent = data.stats.active_users;
+      document.getElementById("stat-tx").textContent = data.stats.total_transactions;
+      document.getElementById("stat-goals").textContent = data.stats.total_goals;
+      document.getElementById("sec-failed").textContent = data.stats.failed_logins_24h;
+      document.getElementById("sec-locked").textContent = data.stats.locked_now;
+      document.getElementById("sec-pending").textContent = data.stats.pending_pw_change;
+
+      const annInput = document.getElementById("input-announcement");
+      if (document.activeElement !== annInput) {
+        annInput.value = data.announcement || "";
+      }
+
+      const tbody = document.getElementById("users-table-body");
+      tbody.innerHTML = data.users.map((u) => {
+        const isSelf = u.id === data.current_admin_id;
+        const roleBadge = u.role === "admin"
+          ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 dark:bg-brand-400/20 dark:text-brand-300">Admin</span>`
+          : `<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">User</span>`;
+        const statusBadge = u.is_active
+          ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">Aktif</span>`
+          : `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300">Nonaktif</span>`;
+
+        return `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+            <td class="py-3 pr-4 font-semibold">${escapeHtml(u.nama)}</td>
+            <td class="py-3 px-3 text-slate-500 dark:text-slate-400">@${escapeHtml(u.username)}</td>
+            <td class="py-3 px-3">${roleBadge}</td>
+            <td class="py-3 px-3 text-xs text-slate-500 dark:text-slate-400">${u.tx_count} transaksi</td>
+            <td class="py-3 px-3">${statusBadge}${u.must_change_password ? ' <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">Wajib ganti PW</span>' : ""}</td>
+            <td class="py-3 pl-3 text-right space-x-2 whitespace-nowrap" data-username="${escapeHtml(u.username)}">
+              ${u.role === "admin"
+                ? `<span class="text-xs text-slate-400">${isSelf ? "(Anda)" : "Operator"}</span>`
+                : `
+                <button onclick="resetPassword(${u.id}, this.parentElement.dataset.username)" class="text-xs font-semibold text-brand-600 dark:text-brand-300 hover:underline">Reset PW</button>
+                <button onclick="toggleStatus(${u.id}, ${u.is_active ? 1 : 0}, this.parentElement.dataset.username)" class="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline">${u.is_active ? "Nonaktifkan" : "Aktifkan"}</button>
+                <button onclick="deleteUser(${u.id}, this.parentElement.dataset.username)" class="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline">Hapus</button>`}
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      const logsList = document.getElementById("activity-logs-list");
+      const logs = data.logs || [];
+      logsList.innerHTML = logs.length
+        ? logs.map((l) => `
+            <li class="py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="font-semibold text-brand-600 dark:text-brand-300 shrink-0">@${escapeHtml(l.username)}</span>
+                <span class="${l.aksi.startsWith("[Keamanan]") ? "text-rose-600 dark:text-rose-400 font-semibold" : "text-slate-700 dark:text-slate-300"} truncate">${escapeHtml(l.aksi)}</span>
+              </div>
+              <span class="text-xs text-slate-400 shrink-0">${escapeHtml(l.created_at)}</span>
+            </li>
+          `).join("")
+        : `<li class="py-6 text-center text-xs text-slate-400">Belum ada aktivitas tercatat.</li>`;
+
+      if (notify) showToast("Data & log diperbarui");
+    };
+
+    document.getElementById("form-announcement").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const announcement = document.getElementById("input-announcement").value.trim();
+      const res = await fetch("/api/admin/announcement", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ announcement }),
+      });
+      if (res.ok) {
+        showToast(announcement ? "Pengumuman ditampilkan ke semua user" : "Pengumuman disembunyikan");
+        loadAdminData(true);
+      }
+    });
+
+    // --- Verifikasi ulang password operator untuk aksi sensitif ---
+    const confirmPassword = (title, desc) => new Promise((resolve) => {
+      const modal = document.getElementById("modal-confirm");
+      const input = document.getElementById("confirm-password");
+      document.getElementById("confirm-title").textContent = title;
+      document.getElementById("confirm-desc").textContent = desc;
+      input.value = "";
+      modal.classList.remove("hidden"); modal.classList.add("flex");
+      input.focus();
+      const done = (val) => {
+        modal.classList.add("hidden"); modal.classList.remove("flex");
+        form.removeEventListener("submit", onSubmit);
+        cancel.removeEventListener("click", onCancel);
+        document.removeEventListener("keydown", onKey);
+        input.value = "";
+        resolve(val);
+      };
+      const form = document.getElementById("form-confirm");
+      const cancel = document.getElementById("confirm-cancel");
+      const onSubmit = (e) => { e.preventDefault(); done(input.value); };
+      const onCancel = () => done(null);
+      const onKey = (e) => { if (e.key === "Escape") done(null); };
+      form.addEventListener("submit", onSubmit);
+      cancel.addEventListener("click", onCancel);
+      document.addEventListener("keydown", onKey);
+    });
+
+    const adminAction = async (url, method, adminPassword) => {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ admin_password: adminPassword }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) { window.location.href = "/auth"; return null; }
+      if (!res.ok) { showToast(data.error || "Aksi gagal", "error"); return null; }
+      return data;
+    };
+
+    const showTempPassword = (username, pw) => {
+      const modal = document.getElementById("modal-temp");
+      document.getElementById("temp-desc").textContent = `Berikan ke @${username} lewat jalur yang aman.`;
+      document.getElementById("temp-value").textContent = pw;
+      modal.classList.remove("hidden"); modal.classList.add("flex");
+    };
+    document.getElementById("temp-copy").addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(document.getElementById("temp-value").textContent); showToast("Password disalin"); }
+      catch { showToast("Tidak bisa menyalin, salin manual", "error"); }
+    });
+    document.getElementById("temp-close").addEventListener("click", () => {
+      const modal = document.getElementById("modal-temp");
+      modal.classList.add("hidden"); modal.classList.remove("flex");
+      document.getElementById("temp-value").textContent = "";
+    });
+
+    window.resetPassword = async (id, username) => {
+      const pw = await confirmPassword(`Reset password @${username}`, "Sistem akan membuat password sementara. Semua sesi aktif pengguna ini akan dikeluarkan.");
+      if (!pw) return;
+      const data = await adminAction(`/api/admin/users/${id}/reset-password`, "PATCH", pw);
+      if (data) { showTempPassword(username, data.temp_password); loadAdminData(true); }
+    };
+
+    window.toggleStatus = async (id, isActive, username) => {
+      let pw = "";
+      if (isActive) {
+        pw = await confirmPassword(`Nonaktifkan @${username}`, "Pengguna akan langsung keluar dan tidak bisa login sampai diaktifkan lagi.");
+        if (!pw) return;
+      }
+      const data = await adminAction(`/api/admin/users/${id}/toggle-status`, "PATCH", pw);
+      if (data) { showToast("Status akun diperbarui"); loadAdminData(true); }
+    };
+
+    window.deleteUser = async (id, username) => {
+      const pw = await confirmPassword(`Hapus permanen @${username}`, "Seluruh data akun ini (transaksi, target, kasbon) akan dihapus dan tidak bisa dikembalikan.");
+      if (!pw) return;
+      const data = await adminAction(`/api/admin/users/${id}`, "DELETE", pw);
+      if (data) { showToast(`Akun @${username} dihapus`); loadAdminData(true); }
+    };
+
+    window.logoutUser = async () => {
+      if (!confirm("Keluar dari akun operator?")) return;
+      await fetch("/api/logout", { method: "POST" });
+      window.location.href = "/auth";
+    };
+
+    loadAdminData(false);
+    setInterval(() => {
+      if (!document.hidden) {
+        loadAdminData(false);
+      }
+    }, 3000);
+  </script>
+</body>
+</html>

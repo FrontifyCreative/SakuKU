@@ -1,0 +1,74 @@
+/* ===== SakuKu design layer ===== */
+:root { color-scheme: light; }
+.dark { color-scheme: dark; }
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: 'Instrument Sans', system-ui, -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+/* Heading & angka besar memakai font display agar punya karakter */
+h1, h2, h3, .font-display {
+  font-family: 'Bricolage Grotesque', 'Instrument Sans', system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Tekstur kertas yang sangat halus (bukan latar polos ala template) */
+body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  opacity: .5;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .45  0 0 0 0 .38  0 0 0 0 .25  0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.dark body::before { opacity: .25; }
+body > * { position: relative; z-index: 1; }
+
+::selection { background: #B3D3C1; color: #0F2D23; }
+.dark ::selection { background: #2E7D5E; color: #fff; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CFC7B5; border-radius: 999px; }
+.dark ::-webkit-scrollbar-thumb { background: #3B362C; }
+
+/* Interaksi: kursor, fokus terlihat, umpan balik tekan */
+button, [role="button"], a, select, summary, label:has(input[type="checkbox"]) { cursor: pointer; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button:active:not(:disabled) { transform: scale(.97); }
+button { transition: background-color .18s ease, color .18s ease, border-color .18s ease, transform .12s ease; }
+:focus-visible { outline: 2px solid #3A8566; outline-offset: 2px; border-radius: 10px; }
+.dark :focus-visible { outline-color: #8CBFA3; }
+input:focus-visible, select:focus-visible { outline: none; }
+
+/* Hero saldo: dekorasi cincin SVG, tanpa gradient */
+.hero { isolation: isolate; }
+.hero > * { position: relative; z-index: 1; }
+.hero > .hero-rings { position: absolute; z-index: 0; }
+.dark .hero { border: 1px solid rgba(255,255,255,.07); }
+
+/* Dark mode: tombol utama dibuat lebih terang agar terbaca di atas latar gelap */
+.dark button.bg-brand-600, .dark a.bg-brand-600 { background-color: #2E7D5E; }
+.dark button.bg-brand-600:hover, .dark button.hover\:bg-brand-700:hover { background-color: #3A8D6C; }
+
+/* Target sentuh minimal ~40px untuk header mobile */
+@media (max-width: 767px) {
+  header.flex button, header.flex a {
+    min-width: 40px; min-height: 40px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  nav.fixed { padding-bottom: calc(.625rem + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* Animasi */
+.view-section { animation: fadeIn .22s cubic-bezier(.2,.7,.2,1); }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.toast-enter { animation: slideUp .25s cubic-bezier(.2,.7,.2,1) forwards; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

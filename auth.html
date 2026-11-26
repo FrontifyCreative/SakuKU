@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
+  <title>Masuk — SakuKu</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="{{ url_for('static', filename='js/tailwind-config.js') }}"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@0.344.0"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+{% if turnstile_site_key %}  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad" async defer></script>
+{% endif %}</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex items-center justify-center p-4 transition-colors duration-200">
+  <div class="w-full max-w-md">
+    <div class="text-center mb-6">
+      <div class="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center text-white mx-auto mb-3">
+        <i data-lucide="wallet" class="w-6 h-6"></i>
+      </div>
+      <h1 class="text-2xl font-extrabold tracking-tight">SakuKu</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Kelola uang saku & target tabunganmu</p>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+      <div class="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mb-5">
+        <button id="tab-login" class="py-2 rounded-lg text-sm font-semibold bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm transition">Masuk</button>
+        <button id="tab-register" class="py-2 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 transition">Daftar Akun</button>
+      </div>
+
+      <div id="auth-error" class="hidden mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-300 text-xs font-medium"></div>
+
+      <form id="form-login" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Username</label>
+          <input type="text" id="login-username" autocomplete="username" placeholder="Contoh: budi123" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 ">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Password</label>
+          <input type="password" id="login-password" autocomplete="current-password" placeholder="Masukkan password" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 ">
+        </div>
+        {% if turnstile_site_key %}<div id="ts-login" class="flex justify-center min-h-[65px]"></div>{% endif %}
+        <button type="submit" class="w-full py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm transition">Masuk ke Dashboard</button>
+      </form>
+
+      <form id="form-register" class="hidden space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Nama Panggilan</label>
+          <input type="text" id="reg-nama" maxlength="50" placeholder="Contoh: Budi" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 ">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Username</label>
+          <input type="text" id="reg-username" pattern="[a-zA-Z0-9_]{3,30}" maxlength="30" autocomplete="username" placeholder="Huruf, angka, garis bawah (3-30)" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 ">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Password (min. 8 karakter, huruf &amp; angka)</label>
+          <input type="password" id="reg-password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Buat password" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 ">
+        </div>
+        {% if turnstile_site_key %}<div id="ts-register" class="flex justify-center min-h-[65px]"></div>{% endif %}
+        <button type="submit" class="w-full py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm transition">Buat Akun & Mulai</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    if (localStorage.getItem("sakuku_theme") === "dark") {
+      document.documentElement.classList.add("dark");
+    }
+    lucide.createIcons();
+
+    const tabLogin = document.getElementById("tab-login");
+    const tabReg = document.getElementById("tab-register");
+    const formLogin = document.getElementById("form-login");
+    const formReg = document.getElementById("form-register");
+    const errorBox = document.getElementById("auth-error");
+
+    const showError = (msg) => {
+      errorBox.textContent = msg;
+      errorBox.classList.remove("hidden");
+    };
+
+
+    // --- Anti-robot (Cloudflare Turnstile). Kosong = fitur nonaktif ---
+    const TS_KEY = {{ turnstile_site_key|tojson }};
+    const tsWidgets = {};
+    const tsTheme = () => (document.documentElement.classList.contains("dark") ? "dark" : "light");
+    const tsRender = (id, action) => {
+      if (!TS_KEY || !window.turnstile || tsWidgets[id] !== undefined) return;
+      tsWidgets[id] = turnstile.render("#" + id, { sitekey: TS_KEY, action, theme: tsTheme(), language: "id" });
+    };
+    const tsToken = (id) => (TS_KEY && tsWidgets[id] !== undefined ? turnstile.getResponse(tsWidgets[id]) || "" : "");
+    const tsReset = (id) => { if (TS_KEY && tsWidgets[id] !== undefined) turnstile.reset(tsWidgets[id]); };
+    const tsRenderVisible = () =>
+      formLogin.classList.contains("hidden") ? tsRender("ts-register", "register") : tsRender("ts-login", "login");
+    window.onTurnstileLoad = tsRenderVisible;
+
+    const switchAuthTab = (mode) => {
+      errorBox.classList.add("hidden");
+      if (mode === "login") {
+        formLogin.classList.remove("hidden");
+        formReg.classList.add("hidden");
+        tabLogin.className = "py-2 rounded-lg text-sm font-semibold bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm transition";
+        tabReg.className = "py-2 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 transition";
+      } else {
+        formLogin.classList.add("hidden");
+        formReg.classList.remove("hidden");
+        tabReg.className = "py-2 rounded-lg text-sm font-semibold bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm transition";
+        tabLogin.className = "py-2 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 transition";
+      }
+      tsRenderVisible();
+    };
+
+    tabLogin.addEventListener("click", () => switchAuthTab("login"));
+    tabReg.addEventListener("click", () => switchAuthTab("register"));
+
+    formLogin.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorBox.classList.add("hidden");
+      if (TS_KEY && !tsToken("ts-login")) return showError("Tunggu verifikasi keamanan selesai, lalu coba lagi");
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: document.getElementById("login-username").value,
+          password: document.getElementById("login-password").value,
+          turnstile_token: tsToken("ts-login"),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) window.location.href = data.must_change_password ? "/ganti-password" : "/";
+      else { showError(data.error || "Gagal masuk"); tsReset("ts-login"); }
+    });
+
+    formReg.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorBox.classList.add("hidden");
+      if (TS_KEY && !tsToken("ts-register")) return showError("Tunggu verifikasi keamanan selesai, lalu coba lagi");
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nama: document.getElementById("reg-nama").value,
+          username: document.getElementById("reg-username").value,
+          password: document.getElementById("reg-password").value,
+          turnstile_token: tsToken("ts-register"),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) window.location.href = "/";
+      else { showError(data.error || "Gagal mendaftar"); tsReset("ts-register"); }
+    });
+  </script>
+</body>
+</html>
